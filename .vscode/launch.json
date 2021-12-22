@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: setup_reps",
+            "type": "python",
+            "request": "launch",
+            "module": "nano_private_network.setup_reps",
+            "args": ["10", "10", "8", "8", "7", "5", "4", "4", "3", "3"]
+        },
+        {
+            "name": "Python: monitor_sync",
+            "type": "python",
+            "request": "launch",
+            "module": "nano_private_network.monitor_sync"
+        }
+    ]
+}
