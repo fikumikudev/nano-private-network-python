@@ -13,6 +13,10 @@ def setup_wallet(rpc_host, rpc_port, private_key):
     rpc = create_rpc_client(rpc_host, rpc_port)
     wallet = rpc.wallet_create()
     account = rpc.wallet_add(wallet, private_key)
+    rpc.wallet_representative_set(wallet=wallet, representative=account)
+    
+    console.log(f"[rpc]Account: '{account}' in wallet: '{wallet}' created on: '{rpc_host}'")
+
     return wallet, account
 
 
@@ -20,6 +24,10 @@ def setup_random_wallet(rpc_host, rpc_port):
     rpc = create_rpc_client(rpc_host, rpc_port)
     wallet = rpc.wallet_create()
     account = rpc.account_create(wallet=wallet)
+    rpc.wallet_representative_set(wallet=wallet, representative=account)
+
+    console.log(f"[rpc]Account: '{account}' in wallet: '{wallet}' created on: '{rpc_host}'")
+
     return wallet, account
 
 
@@ -31,7 +39,8 @@ def get_balance(rpc_host, rpc_port, account):
 
 def send_amount(rpc_host, rpc_port, wallet_from, account_from, account_to, amount):
     rpc = create_rpc_client(rpc_host, rpc_port)
-    rpc.send(wallet=wallet_from, source=account_from, destination=account_to, amount=amount)
+    hash = rpc.send(wallet=wallet_from, source=account_from, destination=account_to, amount=amount)
+    return hash
 
 
 def weights_as_percentages(weights):
@@ -52,15 +61,15 @@ def wait_all_cemented(rpc_host, rpc_port):
 
 def setup_representatives(weights, origin_rpc_host, nodes_rpc_host, rpc_port, genesis_prv_key, reserved_balance):
     origin_ip = resolve_ips(origin_rpc_host)[0]
-    console.log(f"[blue]Origin IP: {origin_ip}")
+    console.log(f"[debug]Origin IP: {origin_ip}")
 
     node_ips = resolve_ips(nodes_rpc_host)
-    console.log(f"[blue]Node IPs: {node_ips}")
+    console.log(f"[debug]Node IPs: {node_ips}")
 
     origin_wallet, origin_account = setup_wallet(origin_rpc_host, rpc_port, genesis_prv_key)
-    console.log(f"[blue]Origin account: {origin_account}")
+    console.log(f"[debug]Origin account: '{origin_account}'")
     origin_balance = get_balance(origin_rpc_host, rpc_port, origin_account)
-    console.log(f"[blue]Origin balance: {origin_balance}")
+    console.log(f"[debug]Origin balance: {origin_balance}")
 
     node_wallets = [setup_random_wallet(host, rpc_port) for host in node_ips]
     node_accounts = [account for (wallet, account) in node_wallets]
@@ -69,17 +78,22 @@ def setup_representatives(weights, origin_rpc_host, nodes_rpc_host, rpc_port, ge
     net_balance = int(origin_balance * (1 - reserved_balance))
     perc_weights = weights_as_percentages(weights)
 
-    for perc_weight, account in zip(perc_weights, node_accounts):
-        amount = int(perc_weight * net_balance)
+    offset = 0
 
-        console.log(f"Sending {(perc_weight * 100):.1f}% ({amount}) to {account}")
-        send_amount(origin_rpc_host, rpc_port, origin_wallet, origin_account, account, amount)
-        console.log(f"Sent {(perc_weight * 100):.1f}% ({amount}) to {account}")
+    for perc_weight, account in zip(perc_weights, node_accounts):
+        amount = int(perc_weight * net_balance) - offset
+        offset += 1
+
+        console.log(f"[rpc]Seeding: '{account}' with: {(perc_weight * 100):.1f}% ({amount})")
+        hash = send_amount(origin_rpc_host, rpc_port, origin_wallet, origin_account, account, amount)
+        console.log(f"  [rpc]Hash: '{hash}'")
 
         wait_all_cemented(origin_rpc_host, rpc_port)
 
-    leftover_origin_balance = get_balance(origin_rpc_host, rpc_port, origin_account)
-    console.log(f"Origin leftover balance: {leftover_origin_balance}")
+        sleep(5)
+
+    origin_balance = get_balance(origin_rpc_host, rpc_port, origin_account)
+    console.log(f"[debug]Origin balance: {origin_balance}")
 
 
 if __name__ == "__main__":
@@ -92,7 +106,7 @@ if __name__ == "__main__":
     parser.add_argument("--reserved_balance", type=float, default=0.1)
     args = parser.parse_args()
 
-    with console.status("[bold green]Setting up reps...") as status:
+    with console.status("[info]Setting up reps...") as status:
         setup_representatives(
             args.weights,
             args.origin_rpc_host,
@@ -102,4 +116,4 @@ if __name__ == "__main__":
             args.reserved_balance,
         )
 
-        console.log("[bold][red]Done")
+        console.log("[success]Done")

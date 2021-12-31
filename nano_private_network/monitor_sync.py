@@ -53,14 +53,18 @@ if __name__ == "__main__":
 
     with Live(console=console, screen=True, auto_refresh=False) as live:
         while True:
-            table = generate_table(args.origin_rpc_host, args.nodes_rpc_host, args.rpc_port)
+            try:
+                table = generate_table(args.origin_rpc_host, args.nodes_rpc_host, args.rpc_port)
 
-            p = Panel(
-                table,
-                padding=0,
-                title="[b]nano private network monitor",
-                subtitle=str(datetime.now().ctime())
-            )
+                p = Panel(
+                    table,
+                    padding=0,
+                    title="[b]nano private network monitor",
+                    subtitle=str(datetime.now().ctime())
+                )
 
-            live.update(p, refresh=True)
+                live.update(p, refresh=True)
+            except:
+                pass
+
             time.sleep(0.25)
