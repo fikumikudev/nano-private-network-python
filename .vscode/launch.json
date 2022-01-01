@@ -29,6 +29,13 @@
             "type": "python",
             "request": "launch",
             "module": "nano_private_network.monitor_reps"
+        },
+        {
+            "name": "Python: spam_1",
+            "type": "python",
+            "request": "launch",
+            "module": "nano_private_network.spam_1",
+            "args": ["1000"]
         }
     ]
 }
