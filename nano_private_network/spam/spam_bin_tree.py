@@ -16,8 +16,8 @@ from rich.pretty import Pretty
 from rich.progress import track
 from rich.table import Table
 
-from .common import *
-from .consts import GENESIS_PRV_KEY
+from ..common import *
+from ..consts import GENESIS_PRV_KEY
 
 
 def get_balance(account):
