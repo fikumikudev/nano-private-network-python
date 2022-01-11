@@ -1,4 +1,5 @@
 import ipaddress
+import logging
 import urllib.parse
 from socket import gethostbyname_ex, inet_aton
 
@@ -54,6 +55,14 @@ def generate_spam_prv_key(index):
     s = f"{index:04d}"
     k = consts.SPAM_PRV_KEY[: -len(s)] + s
     return k
+
+
+def send_amount(rpc, wallet_from, account_from, account_to, amount):
+    # logging.debug(f"Seeding: '{account}' with: {(perc_weight * 100):.1f}% ({amount})")
+    logging.debug(f"Seeding: '{account_to}' with: {amount}")
+    hash = rpc.send(wallet=wallet_from, source=account_from, destination=account_to, amount=amount)
+    logging.debug(f"  Hash: '{hash}'")
+    return hash
 
 
 class PeerCache:

@@ -1,3 +1,4 @@
 nano-python
+nanolib
 rich
 # textual

@@ -2,6 +2,8 @@ import argparse
 import logging
 from time import sleep
 
+import nanolib
+
 from .common import *
 from .consts import *
 from .log_conf import *
@@ -33,14 +35,6 @@ def get_balance(rpc_host, rpc_port, account):
     rpc = create_rpc_client(rpc_host, rpc_port)
     balance = rpc.account_balance(account)["balance"]
     return balance
-
-
-def send_amount(rpc, wallet_from, account_from, account_to, amount):
-    # logging.debug(f"Seeding: '{account}' with: {(perc_weight * 100):.1f}% ({amount})")
-    logging.debug(f"Seeding: '{account_to}' with: {amount}")
-    hash = rpc.send(wallet=wallet_from, source=account_from, destination=account_to, amount=amount)
-    logging.debug(f"  Hash: '{hash}'")
-    return hash
 
 
 def weights_as_percentages(weights):
@@ -115,10 +109,8 @@ def setup_spam_accounts():
 
     for i in range(spam_count):
         prv = generate_spam_prv_key(i)
-        logging.debug(f"Spam private key: '{prv}' for idx: {i}")
-
         account = rpc.key_expand(key=prv)["account"]
-        logging.debug(f"Account: '{account}'")
+        logging.debug(f"Spam account: '{account}' from prvkey: '{prv}' for idx: {i}")
 
         send_amount(rpc, origin_wallet, origin_account, account, amount)
 
