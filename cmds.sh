@@ -9,4 +9,4 @@ python -m nano_prvnet.spam.spam_bin_tree 100000 --rpc_host=172.18.0.
 
 docker build -t nano-prvnet-python .
 
-docker run -it --rm --network="nano-private-network" nano-prvnet-python nano_prvnet.spam.spam_bin_tree 100000 1
+docker run -it --rm --network="nano-private-network" nano-prvnet-python nano_prvnet.spam.spam_bin_tree 100000 0

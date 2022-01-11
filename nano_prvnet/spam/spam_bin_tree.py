@@ -58,6 +58,8 @@ def do_spam():
     global origin_wallet
     origin_wallet, origin_account = setup_wallet(spam_prv)
 
+    rpc.search_pending_all()
+
     origin_balance = wait_for_balance(origin_account)
 
     logging.debug(f"Origin account: '{origin_account}' with balance: '{origin_balance}'")
@@ -182,5 +184,8 @@ if __name__ == "__main__":
 
     global rpc
     rpc = create_rpc_client(ip, args.rpc_port)
+
+    global rpc_load_balance
+    rpc_load_balance = create_rpc_client(args.node, args.rpc_port)
 
     do_spam()
