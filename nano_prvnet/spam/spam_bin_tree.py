@@ -18,6 +18,7 @@ from rich.table import Table
 
 from ..common import *
 from ..consts import GENESIS_PRV_KEY
+from ..log_conf import *
 
 
 def get_balance(account):
@@ -30,7 +31,7 @@ def setup_wallet(private_key):
     account = rpc.wallet_add(wallet, private_key)
     rpc.wallet_representative_set(wallet=wallet, representative=account)
 
-    console.log(f"[rpc]Account: '{account}' in wallet: '{wallet}'")
+    logging.debug(f"Account: '{account}' in wallet: '{wallet}'")
 
     return wallet, account
 
@@ -48,23 +49,28 @@ def send_amount(account_from, account_to, amount):
 
 
 def do_spam():
+    spam_idx = args.node_index
+    prv_key = generate_spam_prv_key(spam_idx)
+    logging.debug(f"Spam private key: '{prv_key}' for idx: {spam_idx}")
+
     global origin_wallet
-    origin_wallet, origin_account = setup_wallet(args.prv_key)
-    console.log(f"[debug]Origin account: '{origin_account}'")
+    origin_wallet, origin_account = setup_wallet(prv_key)
+    logging.debug(f"Origin account: '{origin_account}'")
     origin_balance = get_balance(origin_account)
-    console.log(f"[debug]Origin balance: {origin_balance}")
+    logging.debug(f"Origin balance: {origin_balance}")
 
     q = deque()
-    
+
     spam_amount = int(origin_balance * 0.01)
-    console.log(f"[debug]Spam balance: {spam_amount}")
+    logging.debug(f"Spam balance: {spam_amount}")
     q.append((origin_account, spam_amount))
 
-    for n in track(range(args.count), description="Spamming...", console=console):
+    for n in track(range(args.count), description="Spamming..."):
         account, balance = q.popleft()
 
         while get_balance(account) == 0:
-            time.sleep(0.1)
+            logging.debug(f"Empty account: {account}")
+            time.sleep(1)
 
         a1 = create_account()
         a2 = create_account()
@@ -84,21 +90,21 @@ def do_spam():
 if __name__ == "__main__":
     import argparse
 
-    logging.basicConfig(level=logging.INFO)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("count", type=int)
-    parser.add_argument("--rpc_host", default="node-main")
+    parser.add_argument("node_index", type=int)
+    parser.add_argument("--node", default="node")
     parser.add_argument("--rpc_port", default=17076)
-    parser.add_argument("--prv_key", default=GENESIS_PRV_KEY)
 
     global args
     args = parser.parse_args()
 
-    global rpc
-    rpc = create_rpc_client(args.rpc_host, args.rpc_port)
+    ips = resolve_ips(args.node)
+    ip = ips[args.node_index]
 
-    global console
-    console = Console()
+    logging.info(f"Node ({args.node_index}): {ip}")
+
+    global rpc
+    rpc = create_rpc_client(ip, args.rpc_port)
 
     do_spam()

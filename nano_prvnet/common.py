@@ -5,6 +5,8 @@ from socket import gethostbyname_ex, inet_aton
 import nano
 from nano.rpc import Client
 
+from . import consts
+
 
 def resolve_ips(host):
     (_, _, ips) = gethostbyname_ex(host)
@@ -46,6 +48,12 @@ def get_block_stats(rpc_host, rpc_port):
     cemented = c["cemented"]
     unchecked = c["unchecked"]
     return count, cemented, unchecked
+
+
+def generate_spam_prv_key(index):
+    s = f"{index:04d}"
+    k = consts.SPAM_PRV_KEY[: -len(s)] + s
+    return k
 
 
 class PeerCache:

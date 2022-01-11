@@ -9,33 +9,33 @@
             "name": "Python: setup_reps",
             "type": "python",
             "request": "launch",
-            "module": "nano_private_network.setup_reps",
+            "module": "nano_prvnet.setup_reps",
             "args": ["1", "1", "1", "1", "1", "1", "1", "1", "1", "1"]
         },
         {
             "name": "Python: monitor_sync",
             "type": "python",
             "request": "launch",
-            "module": "nano_private_network.monitor_sync"
+            "module": "nano_prvnet.monitor_sync"
         },
         {
             "name": "Python: monitor_elections",
             "type": "python",
             "request": "launch",
-            "module": "nano_private_network.monitor_elections"
+            "module": "nano_prvnet.monitor_elections"
         },
         {
             "name": "Python: monitor_reps",
             "type": "python",
             "request": "launch",
-            "module": "nano_private_network.monitor_reps"
+            "module": "nano_prvnet.monitor_reps"
         },
         {
-            "name": "Python: spam_1",
+            "name": "Python: spam_bin_tree",
             "type": "python",
             "request": "launch",
-            "module": "nano_private_network.spam_1",
-            "args": ["1000"]
+            "module": "nano_prvnet.spam.spam_bin_tree",
+            "args": ["1000", "0"]
         }
     ]
 }
