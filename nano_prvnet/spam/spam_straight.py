@@ -1,3 +1,4 @@
+import itertools
 import logging
 import random
 import time
@@ -64,23 +65,32 @@ def do_spam():
 
     logging.debug(f"Origin account: '{origin_account}' with balance: '{origin_balance}'")
 
-    q = deque()
-
-    spam_amount = int(origin_balance * 0.01)
+    spam_amount = int(origin_balance * 0.01 / args.chains)
     logging.debug(f"Spam amount: {spam_amount}")
 
-    seed = nanolib.generate_seed()
-    first_account = nanolib.generate_account_id(seed, 1)
-    logging.debug(f"First account: '{first_account}' for seed: '{seed}'")
+    chains = []
 
-    first_hash = send_amount(
-        rpc, wallet_from=origin_wallet, account_from=origin_account, account_to=first_account, amount=spam_amount
-    )
+    for n in range(args.chains):
+        seed = nanolib.generate_seed()
+        first_account = nanolib.generate_account_id(seed, 0)
+        logging.debug(f"First account: '{first_account}' for seed: '{seed}' chain idx: {n}")
 
-    q.append((1, first_account, spam_amount, first_hash))
+        first_hash = send_amount(
+            rpc, wallet_from=origin_wallet, account_from=origin_account, account_to=first_account, amount=spam_amount
+        )
+
+        chains.append(do_straight_spam(seed, first_hash, spam_amount))
 
     for n in track(range(args.count), description="Spamming..."):
-        idx, account, balance, link = q.popleft()
+        for it in chains:
+            next(it)
+
+
+def do_straight_spam(seed, link, balance):
+    yield
+
+    for idx in itertools.count():
+        account = nanolib.generate_account_id(seed, idx)
 
         block_receive = nanolib.Block(
             # Use the new universal blocks instead of legacy blocks
@@ -110,14 +120,9 @@ def do_spam():
 
         hash_receive = rpc.process(block_receive.json())
 
-        idx1 = idx * 2
-        idx2 = idx * 2 + 1
-        a1 = nanolib.generate_account_id(seed, idx1)
-        a2 = nanolib.generate_account_id(seed, idx2)
+        next_account = nanolib.generate_account_id(seed, idx + 1)
 
-        am = floor(balance / 2)
-
-        block_1 = nanolib.Block(
+        block_send = nanolib.Block(
             block_type="state",
             account=account,
             representative=account,
@@ -126,41 +131,17 @@ def do_spam():
             previous=hash_receive,
             # We're sending 500000000000000000000000 raw to our other account,
             # leaving us with 500000000000000000000000 raw in this account
-            balance=am,
-            # In this case, 'link_as_account' corresponds to the recipient
-            link_as_account=a1,
-        )
-
-        block_1.solve_work(difficulty=DIFFICULTY)
-        block_1.sign(prv_key)
-
-        hash_1 = rpc.process(block_1.json())
-
-        block_2 = nanolib.Block(
-            block_type="state",
-            account=account,
-            representative=account,
-            # This is the second block in our account-specific blockchain,
-            # so we need to refer to the previous block
-            previous=hash_1,
-            # We're sending 500000000000000000000000 raw to our other account,
-            # leaving us with 500000000000000000000000 raw in this account
             balance=0,
             # In this case, 'link_as_account' corresponds to the recipient
-            link_as_account=a2,
+            link_as_account=next_account,
         )
 
-        block_2.solve_work(difficulty=DIFFICULTY)
-        block_2.sign(prv_key)
+        block_send.solve_work(difficulty=DIFFICULTY)
+        block_send.sign(prv_key)
 
-        hash_2 = rpc.process(block_2.json())
+        link = rpc.process(block_send.json())
 
-        q.append((idx1, a1, am, hash_1))
-        q.append((idx2, a2, am, hash_2))
-
-        # time.sleep(1)
-
-    pass
+        yield
 
 
 if __name__ == "__main__":
@@ -168,6 +149,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("count", type=int)
+    parser.add_argument("chains", type=int)
     parser.add_argument("node_index", type=int)
     parser.add_argument("--node", default="node")
     parser.add_argument("--rpc_port", default=17076)

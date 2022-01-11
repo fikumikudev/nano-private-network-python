@@ -36,6 +36,13 @@
             "request": "launch",
             "module": "nano_prvnet.spam.spam_bin_tree",
             "args": ["1000", "0"]
+        },
+        {
+            "name": "Python: spam_straight",
+            "type": "python",
+            "request": "launch",
+            "module": "nano_prvnet.spam.spam_straight",
+            "args": ["1000", "6", "0"]
         }
     ]
 }
